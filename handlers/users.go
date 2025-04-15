@@ -6,6 +6,7 @@ import (
 
 	"github.com/clembabs/user-api/models"
 	"github.com/clembabs/user-api/repositories"
+	"github.com/clembabs/user-api/response"
 	"github.com/gorilla/mux"
 )
 
@@ -20,36 +21,61 @@ func NewUserHandler(repo repositories.UserRepository) *UserHandler {
 func (h *UserHandler) GetUsers(w http.ResponseWriter, _ *http.Request) {
 	users, err := h.Repo.GetAll()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.WriteJSON(w, http.StatusInternalServerError, response.ApiResponseWrapper{
+			Message: "Failed to fetch users",
+			Error:   true,
+		})
 		return
 	}
-	json.NewEncoder(w).Encode(users)
+	response.WriteJSON(w, http.StatusOK, response.ApiResponseWrapper{
+		Message: "Users retrieved successfully",
+		Error:   false,
+		Data:    users,
+	})
 }
 
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	id := (mux.Vars(r)["id"])
 	user, err := h.Repo.GetByID(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.WriteJSON(w, http.StatusBadRequest, response.ApiResponseWrapper{
+			Message: "Failed to fetch user",
+			Error:   true,
+		})
+
 		return
 	}
-	json.NewEncoder(w).Encode(user)
+	response.WriteJSON(w, http.StatusOK, response.ApiResponseWrapper{
+		Message: "User retrieved successfully",
+		Error:   false,
+		Data:    user,
+	})
+
 }
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.WriteJSON(w, http.StatusBadRequest, response.ApiResponseWrapper{
+			Message: err.Error(),
+			Error:   true,
+		})
 		return
 	}
 
 	if err := h.Repo.Create(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.WriteJSON(w, http.StatusBadRequest, response.ApiResponseWrapper{
+			Message: err.Error(),
+			Error:   true,
+		})
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	response.WriteJSON(w, http.StatusOK, response.ApiResponseWrapper{
+		Message: "User Created successfully",
+		Error:   false,
+		Data:    user,
+	})
 }
 
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -57,19 +83,27 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	// Decode incoming JSON body
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.WriteJSON(w, http.StatusBadRequest, response.ApiResponseWrapper{
+			Message: err.Error(),
+			Error:   true,
+		})
 		return
 	}
 
 	// Call the repository to update the user
 	if err := h.Repo.Update(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.WriteJSON(w, http.StatusBadRequest, response.ApiResponseWrapper{
+			Message: err.Error(),
+			Error:   true,
+		})
 		return
 	}
 
-	// Respond with the updated user
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	response.WriteJSON(w, http.StatusOK, response.ApiResponseWrapper{
+		Message: "User Updated successfully",
+		Error:   false,
+		Data:    user,
+	})
 }
 
 func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -78,10 +112,16 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	// Call the repository to delete the user
 	if err := h.Repo.Delete(id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.WriteJSON(w, http.StatusBadRequest, response.ApiResponseWrapper{
+			Message: err.Error(),
+			Error:   true,
+		})
 		return
 	}
 
 	// Send no content response
-	w.WriteHeader(http.StatusNoContent)
+	response.WriteJSON(w, http.StatusOK, response.ApiResponseWrapper{
+		Message: "User Deleted successfully",
+		Error:   false,
+	})
 }
