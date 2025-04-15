@@ -8,8 +8,14 @@ require (
 	modernc.org/sqlite v1.37.0
 )
 
+require gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
+
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/go-playground/validator v9.31.0+incompatible
+	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect

@@ -7,8 +7,11 @@ import (
 	"github.com/clembabs/user-api/models"
 	"github.com/clembabs/user-api/repositories"
 	"github.com/clembabs/user-api/response"
+	"github.com/go-playground/validator"
 	"github.com/gorilla/mux"
 )
+
+var validate = validator.New()
 
 type UserHandler struct {
 	Repo repositories.UserRepository
@@ -55,8 +58,9 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var user models.User
-
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+	json.NewDecoder(r.Body).Decode(&user)
+	err := validate.Struct(user)
+	if err != nil {
 		response.WriteJSON(w, http.StatusBadRequest, response.ApiResponseWrapper{
 			Message: err.Error(),
 			Error:   true,
@@ -80,9 +84,9 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var user models.User
-
-	// Decode incoming JSON body
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+	json.NewDecoder(r.Body).Decode(&user)
+	err := validate.Struct(user)
+	if err != nil {
 		response.WriteJSON(w, http.StatusBadRequest, response.ApiResponseWrapper{
 			Message: err.Error(),
 			Error:   true,
