@@ -7,6 +7,7 @@ import (
 
 	"github.com/clembabs/user-api/db"
 	"github.com/clembabs/user-api/handlers"
+	"github.com/clembabs/user-api/middlewares"
 	"github.com/clembabs/user-api/repositories"
 	"github.com/gorilla/mux"
 )
@@ -33,8 +34,15 @@ func main() {
 	r.HandleFunc("/users/{id}", handler.UpdateUser).Methods("PUT")
 	r.HandleFunc("/users/{id}", handler.DeleteUser).Methods("DELETE")
 
+	// wrap middlewares
+	wrapped := middlewares.Logger(
+		middlewares.Recover(
+			middlewares.CORS(r),
+		),
+	)
+
 	fmt.Println("Server running on http://localhost:8080")
-	err = http.ListenAndServe(":8080", r)
+	err = http.ListenAndServe(":8080", wrapped)
 	if err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}
