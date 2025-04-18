@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -26,13 +27,26 @@ func main() {
 
 	// Create the handler with the repository
 	handler := handlers.NewUserHandler(repo)
+	authHandler := handlers.NewAuthHandler(repo)
 
 	r := mux.NewRouter()
+
+	//Auth
+	r.HandleFunc("/auth/signup", authHandler.SignUp).Methods("POST")
+	r.HandleFunc("/auth/login", authHandler.Login).Methods("POST")
+
+	//User routes
 	r.HandleFunc("/users", handler.GetUsers).Methods("GET")
 	r.HandleFunc("/users/{id}", handler.GetUser).Methods("GET")
 	r.HandleFunc("/users", handler.CreateUser).Methods("POST")
 	r.HandleFunc("/users/{id}", handler.UpdateUser).Methods("PUT")
 	r.HandleFunc("/users/{id}", handler.DeleteUser).Methods("DELETE")
+
+	//TODO:
+	r.Handle("/me", middlewares.Auth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		userID := r.Context().Value(middlewares.UserIDKey).(string)
+		json.NewEncoder(w).Encode(map[string]string{"id": userID})
+	}))).Methods("GET")
 
 	// wrap middlewares
 	wrapped := middlewares.Logger(

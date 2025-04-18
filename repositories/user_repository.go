@@ -5,12 +5,16 @@ import (
 	"fmt"
 
 	"github.com/clembabs/user-api/models"
+	"github.com/go-playground/validator"
 	"github.com/google/uuid"
 )
+
+var validate = validator.New()
 
 type UserRepository interface {
 	GetAll() ([]models.User, error)
 	GetByID(id string) (*models.User, error)
+	GetByEmail(email string) (*models.User, error)
 	Create(user *models.User) error
 	Update(user *models.User) error
 	Delete(id string) error
@@ -25,7 +29,8 @@ func (r *SQLiteUserRepository) Init() error {
 		CREATE TABLE IF NOT EXISTS users (
 			id TEXT PRIMARY KEY,
 			name TEXT NOT NULL,
-			email TEXT UNIQUE NOT NULL
+			email TEXT UNIQUE NOT NULL,
+			password TEXT NOT NULL
 		)
 	`)
 	if err != nil {
@@ -69,11 +74,25 @@ func (r *SQLiteUserRepository) GetByID(id string) (*models.User, error) {
 	return &user, nil
 }
 
+func (r *SQLiteUserRepository) GetByEmail(email string) (*models.User, error) {
+	row := r.DB.QueryRow("SELECT id, name, email, password FROM users WHERE email = ?", email)
+	var user models.User
+	err := row.Scan(&user.ID, &user.Name, &user.Email, &user.Password)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 func (r *SQLiteUserRepository) Create(user *models.User) error {
+	// Validate required fields
+	if err := validate.Struct(user); err != nil {
+		return err // returns validation error, e.g., if Name is empty
+	}
 	user.ID = uuid.New().String() // generate a UUID string
 
 	// Insert user into the table
-	_, err := r.DB.Exec("INSERT INTO users (id, name, email) VALUES (?, ?, ?)", user.ID, user.Name, user.Email)
+	_, err := r.DB.Exec("INSERT INTO users (id, name, email, password) VALUES (?, ?, ?, ?)", user.ID, user.Name, user.Email, user.Password)
 	if err != nil {
 		return err
 	}
