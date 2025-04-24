@@ -19,8 +19,9 @@ func NewAuthHandler(repo repositories.UserRepository) *AuthHandler {
 }
 
 type AuthResponse struct {
-	User  models.User `json:"user"`
-	Token string      `json:"token,omitempty"`
+	User         models.User `json:"user"`
+	Token        string      `json:"token,omitempty"`
+	RefreshToken string      `json:"refresh_token,omitempty"`
 }
 
 func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
@@ -83,14 +84,27 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-
+	// Generate a JWT token
 	token, _ := utils.GenerateJWT(user.ID)
+	// Generate a refresh token
+	// Note: In a real-world application, you should store the refresh token securely
+	// and implement a mechanism to refresh the access token using the refresh token.
+	// For simplicity, we're just generating a new refresh token here.
+	//Your code works and matches your comment: you're just generating a refresh token and validating it.
+
+	// For learning/dev, it's fine.
+
+	// In production, you'd need storage, rotation, and revocation mechanisms to protect against abuse.
+
+	refreshToken, _ := utils.GenerateRefreshToken(user.ID)
 	response.WriteJSON(w, http.StatusCreated, response.ApiResponseWrapper{
 		Message: "Login successful",
 		Error:   false,
 		Data: AuthResponse{
-			User:  *user, // dereference the pointer
-			Token: token,
+			User:         *user, // dereference the pointer
+			Token:        token,
+			RefreshToken: refreshToken,
 		},
 	})
+
 }

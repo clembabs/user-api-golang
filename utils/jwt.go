@@ -33,7 +33,7 @@ func GenerateJWT(userID string) (string, error) {
 	claims := &Claims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // JWT will expire exactly 24 hours
 		},
 	}
 
@@ -47,4 +47,14 @@ func ParseJWT(tokenString string) (*Claims, error) {
 		return jwtKey, nil
 	})
 	return claims, err
+}
+
+func GenerateRefreshToken(userID string) (string, error) {
+	claims := jwt.RegisteredClaims{
+		Subject:   userID,
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // JWT will expire exactly 24 hours
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtKey)
 }
